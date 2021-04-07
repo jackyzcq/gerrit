@@ -18,19 +18,20 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import com.google.gerrit.acceptance.SshEnabled;
+import com.google.gerrit.acceptance.testsuite.request.SshSessionFactory;
 import com.google.gerrit.common.Nullable;
 import com.google.gerrit.entities.Account;
 import com.google.gerrit.server.account.VersionedAuthorizedKeys;
 import com.google.gerrit.server.ssh.SshKeyCache;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.KeyPair;
 import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 
 @Singleton
 public class TestSshKeys {
@@ -86,27 +87,26 @@ public class TestSshKeys {
 
   private KeyPair createKeyPair(Account.Id accountId, String username, @Nullable String email)
       throws Exception {
-    KeyPair keyPair = genSshKey();
+    KeyPair keyPair = SshSessionFactory.genSshKey();
     authorizedKeys.addKey(accountId, publicKey(keyPair, email));
     sshKeyCache.evict(username);
     return keyPair;
   }
 
-  public static KeyPair genSshKey() throws JSchException {
-    JSch jsch = new JSch();
-    return KeyPair.genKeyPair(jsch, KeyPair.ECDSA, 256);
-  }
-
   public static String publicKey(KeyPair sshKey, @Nullable String comment)
-      throws UnsupportedEncodingException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    sshKey.writePublicKey(out, comment);
-    return out.toString(US_ASCII.name()).trim();
+      throws IOException, GeneralSecurityException {
+    return preparePublicKey(sshKey, comment).toString(US_ASCII.name()).trim();
   }
 
-  public static byte[] privateKey(KeyPair keyPair) {
+  public static byte[] publicKeyBlob(KeyPair sshKey) throws IOException, GeneralSecurityException {
+    return preparePublicKey(sshKey, null).toByteArray();
+  }
+
+  private static ByteArrayOutputStream preparePublicKey(KeyPair sshKey, String comment)
+      throws IOException, GeneralSecurityException {
+    OpenSSHKeyPairResourceWriter keyPairWriter = new OpenSSHKeyPairResourceWriter();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    keyPair.writePrivateKey(out);
-    return out.toByteArray();
+    keyPairWriter.writePublicKey(sshKey, comment, out);
+    return out;
   }
 }

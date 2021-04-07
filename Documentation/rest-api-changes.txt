@@ -565,10 +565,73 @@ describes the change.
 ----
 
 Historical state of the change can be retrieved by specifying the
-`meta=SHA1` parameter. This will use a historical NoteDb snapshot to
-populate ChangeInfo. If the SHA1 is not reachable as a NoteDb state,
+`meta=SHA-1` parameter. This will use a historical NoteDb snapshot to
+populate ChangeInfo. If the SHA-1 is not reachable as a NoteDb state,
 status code 412 is returned.
 
+----
+
+[[get-meta-diff]]
+=== Get Meta Diff
+--
+'GET /changes/link:#change-id[\{change-id\}]/meta_diff/?old=SHA-1&meta=SHA-1'
+--
+
+Retrieves the difference between two historical states of a change
+by specifying the `old=SHA-1` and the `meta=SHA-1` parameters.
+
+If the `old` parameter is not provided, the parent of the `meta`
+SHA-1 is used. If the `meta` parameter is not provided, the current
+state of the change is used. If neither are provided, the
+difference between the current state of the change and its previous
+state is returned.
+
+Additional fields can be obtained by adding `o` parameters, analogous
+to link:#get-change[Get Change], and the same concerns for Get Change hold for
+this endpoint too. Fields are described in link:#list-changes[Query Changes].
+
+.Request
+----
+  GET /changes/myProject~master~I8473b95934b5732ac55d26311a706c9c2bde9940/meta_diff?old=b083abc34eb6dbdb9e154ba092fc198000e997b4&meta=63b81f2bde703ae07787a940e8fdf9a1828605b1 HTTP/1.0
+----
+
+As a response, two link:#change-info[ChangeInfo] entities are returned
+that describe information added and removed from the `old` change state.
+Only fields that differ between the change's two states are returned.
+
+.Response
+----
+  HTTP/1.1 200 OK
+  Content-Disposition: attachment
+  Content-Type: application/json; charset=UTF-8
+
+  )]}'
+  {
+    "added": {
+      "attention_set": [
+        {
+          "account": {
+            "name": "John Doe"
+          },
+         "last_update": "2013-02-21 11:16:36.775000000",
+         "reason": "reviewer or cc replied"
+        }
+      ]
+      "updated": "2013-02-21 11:16:36.775000000",
+      "topic": "new-topic"
+    },
+    "removed": {
+      "updated": "2013-02-20 12:05:34.111000000",
+      "topic": "old-topic"
+    }
+  }
+----
+
+If the provided SHA-1 for `meta` is not reachable as a NoteDb
+state, the status code 412 is returned. If the SHA-1 for `old`
+is not reachable, the difference between the change at state
+`meta` and an empty change is returned.
+----
 
 [[get-change-detail]]
 === Get Change Detail
@@ -1140,7 +1203,7 @@ If the change had no assignee the response is "`204 No Content`".
 --
 
 Check if the given change is a pure revert of the change it references in `revertOf`.
-Optionally, the query parameter `o` can be passed in to specify a commit (SHA1 in
+Optionally, the query parameter `o` can be passed in to specify a commit (SHA-1 in
 40 digit hex representation) to check against. It takes precedence over `revertOf`.
 If the change has no reference in `revertOf`, the parameter is mandatory.
 
@@ -3513,6 +3576,9 @@ The entries in the map are sorted by label name.
 Deletes a single vote from a change. Note, that even when the last vote of
 a reviewer is removed the reviewer itself is still listed on the change.
 
+If another user removed a user's vote, the user with the deleted vote will be
+added to the attention set.
+
 .Request
 ----
   DELETE /changes/myProject~master~I8473b95934b5732ac55d26311a706c9c2bde9940/reviewers/John%20Doe/votes/Code-Review HTTP/1.0
@@ -5877,6 +5943,9 @@ deleting the vote (with same label) from a newer patch set by mistake.
 Note, that even when the last vote of a reviewer is removed the reviewer itself
 is still listed on the change.
 
+If another user removed a user's vote, the user with the deleted vote will be
+added to the attention set.
+
 .Request
 ----
   DELETE /changes/myProject~master~I8473b95934b5732ac55d26311a706c9c2bde9940/revisions/674ac754f91e64a0efb8087e59a176484bd534d1/reviewers/John%20Doe/votes/Code-Review HTTP/1.0
@@ -6055,6 +6124,7 @@ Users are added to the attention set if one the following apply:
 * The change is marked ready for review.
 * As an owner/uploader, when someone replies on your change.
 * As a reviewer, when the owner/uploader replies.
+* When the user's vote is deleted by another user.
 
 Users are removed from the attention set if one the following apply:
 
@@ -6478,7 +6548,7 @@ Only set if link:#current-revision[the current revision] is requested
 (in which case it will only contain a key for the current revision) or
 if link:#all-revisions[all revisions] are requested.
 |`meta_rev_id`           |optional|
-The SHA1 of the NoteDb meta ref.
+The SHA-1 of the NoteDb meta ref.
 |`tracking_ids`       |optional|
 A list of link:#tracking-id-info[TrackingIdInfo] entities describing
 references to external tracking systems. Only set if
@@ -6716,7 +6786,7 @@ Available with the link:#list-change-comments[list change comments] endpoint.
 Contains the link:rest-api-changes.html#change-message-info[id] of the change
 message that this comment is linked to.
 |`commit_id` |optional|
-Hex commit SHA1 (40 characters string) of the commit of the patchset to which
+Hex commit SHA-1 (40 characters string) of the commit of the patchset to which
 this comment applies.
 |`context_lines` |optional|
 A list of link:#context-line[ContextLine] containing the lines of the source
@@ -7508,7 +7578,7 @@ The `RebaseInput` entity contains information for changing parent when rebasing.
 |===========================
 |Field Name    ||Description
 |`base`        |optional|
-The new parent revision. This can be a ref or a SHA1 to a concrete patchset. +
+The new parent revision. This can be a ref or a SHA-1 to a concrete patchset. +
 Alternatively, a change number can be specified, in which case the current
 patch set is inferred. +
 Empty string is used for rebasing directly on top of the target branch,

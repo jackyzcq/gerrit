@@ -257,6 +257,11 @@ const styleSheet = safeStyleSheet`
     --status-ready: var(--pink-800);
     --status-custom: var(--purple-900);
 
+    /* file status colors */
+    --file-status-added: var(--green-300);
+    --file-status-changed: var(--red-200);
+    --file-status-unchanged: var(--grey-300);
+
     /* fonts */
     --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
     --header-font-family: 'Open Sans', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
@@ -331,7 +336,6 @@ const styleSheet = safeStyleSheet`
     --coverage-covered: #e0f2f1;
     --coverage-not-covered: #ffd1a4;
     --ranged-comment-hint-text-color: var(--orange-900);
-    --token-highlighting-color: #fffd54;
 
     /* syntax colors */
     --syntax-attr-color: #219;

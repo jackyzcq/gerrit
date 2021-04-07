@@ -815,6 +815,7 @@ Default is 1024 for most caches, except:
 * `"groups"`: default is unlimited
 * `"groups_byname"`: default is unlimited
 * `"groups_byuuid"`: default is unlimited
+* `"groups_byuuid_persisted"`: default is `1g` (1 GiB of disk space)
 * `"plugin_resources"`: default is 2m (2 MiB of memory)
 
 +
@@ -1034,6 +1035,17 @@ For this cache it is important to configure a size that is larger than
 the number of internal Gerrit groups, otherwise general Gerrit
 performance may be poor. This is why by default this cache is
 unlimited.
++
+External group membership obtained from LDAP is cached under
+`"ldap_groups"`.
+
+cache `"groups_byuuid_persisted"`::
++
+Caches the basic group information of internal groups by group UUID,
+including the group owner, name, and description.
++
+This is the persisted version of `groups_byuuid` cache. The intention of this
+cache is to have an in-memory size of 0.
 +
 External group membership obtained from LDAP is cached under
 `"ldap_groups"`.
@@ -2439,7 +2451,7 @@ Optional pattern to use for constructing the gitweb URL when pointing
 at a specific commit when `gitweb.type` is set to `custom`.
 +
 Valid replacements are `${project}` for the project name in Gerrit
-and `${commit}` for the SHA1 hash for the commit.
+and `${commit}` for the SHA-1 hash for the commit.
 
 [[gitweb.project]]gitweb.project::
 +
@@ -2471,7 +2483,7 @@ at the contents of the root tree in a specific commit when `gitweb.type`
 is set to `custom`.
 +
 Valid replacements are `${project}` for the project name in Gerrit
-and `${commit}` for the SHA1 hash for the commit.
+and `${commit}` for the SHA-1 hash for the commit.
 
 [[gitweb.file]]gitweb.file::
 +
@@ -2480,7 +2492,7 @@ at the contents of a file in a specific commit when `gitweb.type` is
 set to `custom`.
 +
 Valid replacements are `${project}` for the project name in Gerrit,
-`${file}` for the file name and `${commit}` for the SHA1 hash for
+`${file}` for the file name and `${commit}` for the SHA-1 hash for
 the commit.
 
 [[gitweb.filehistory]]gitweb.filehistory::
@@ -4184,7 +4196,7 @@ Carrying out this check on gits with many refs and commits can be a
 very CPU-heavy operation. For non public Gerrit-servers this check may
 be overkill.
 +
-Only disable this check if you trust the clients not to forge SHA1
+Only disable this check if you trust the clients not to forge SHA-1
 references to access commits intended to be hidden from the user.
 +
 Default is true.
@@ -4824,6 +4836,16 @@ namespace. To alias `replication start` to `gerrit replicate`:
 [ssh-alias]
   replicate = replication start
 ----
+
+[[ssh]]
+=== Section ssh
+
+[[ssh.clientImplementation]]ssh.clientImplementation::
++
+JCraft JSch client is supported in addition to Apache MINA SSH client.
+To use JSch client set the value to `JSCH`.
++
+By default, `APACHE`.
 
 [[sshd]]
 === Section sshd

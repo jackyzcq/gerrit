@@ -208,7 +208,7 @@ suite('gr-diff tests', () => {
           leftImage.addEventListener('load', () => {
             assert.isOk(leftImage);
             assert.equal(leftImage.getAttribute('src'),
-                'data:image/bmp;base64, ' + mockFile1.body);
+                'data:image/bmp;base64,' + mockFile1.body);
             assert.equal(leftLabelContent.textContent, '1\u00d71 image/bmp');// \u00d7 - '×'
             leftLoaded = true;
             if (rightLoaded) {
@@ -220,7 +220,7 @@ suite('gr-diff tests', () => {
           rightImage.addEventListener('load', () => {
             assert.isOk(rightImage);
             assert.equal(rightImage.getAttribute('src'),
-                'data:image/bmp;base64, ' + mockFile2.body);
+                'data:image/bmp;base64,' + mockFile2.body);
             assert.equal(rightLabelContent.textContent, '1\u00d71 image/bmp');// \u00d7 - '×'
 
             rightLoaded = true;
@@ -302,7 +302,7 @@ suite('gr-diff tests', () => {
           leftImage.addEventListener('load', () => {
             assert.isOk(leftImage);
             assert.equal(leftImage.getAttribute('src'),
-                'data:image/bmp;base64, ' + mockFile1.body);
+                'data:image/bmp;base64,' + mockFile1.body);
             assert.equal(leftLabelContent.textContent, '1\u00d71 image/bmp');// \u00d7 - '×'
             leftLoaded = true;
             if (rightLoaded) {
@@ -314,7 +314,7 @@ suite('gr-diff tests', () => {
           rightImage.addEventListener('load', () => {
             assert.isOk(rightImage);
             assert.equal(rightImage.getAttribute('src'),
-                'data:image/bmp;base64, ' + mockFile2.body);
+                'data:image/bmp;base64,' + mockFile2.body);
             assert.equal(rightLabelContent.textContent, '1\u00d71 image/bmp');// \u00d7 - '×'
 
             rightLoaded = true;
@@ -472,12 +472,10 @@ suite('gr-diff tests', () => {
     test('_handleTap content', done => {
       const content = document.createElement('div');
       const lineEl = document.createElement('div');
-      lineEl.className = 'lineNum';
-      const row = document.createElement('div');
-      row.appendChild(lineEl);
-      row.appendChild(content);
 
       const selectStub = sinon.stub(element, '_selectLine');
+      sinon.stub(element.$.diffBuilder, 'getLineElByChild')
+          .callsFake(() => lineEl);
 
       content.className = 'content';
       content.addEventListener('click', e => {

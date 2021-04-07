@@ -20,17 +20,11 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.google.gerrit.acceptance.testsuite.account.TestSshKeys;
 import com.google.gerrit.common.FooterConstants;
 import com.google.gerrit.entities.Project;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.KeyPair;
-import com.jcraft.jsch.Session;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.jgit.api.FetchCommand;
@@ -47,40 +41,14 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.FetchResult;
-import org.eclipse.jgit.transport.JschConfigSessionFactory;
-import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
-import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.jgit.util.FS;
 
 public class GitUtil {
   private static final AtomicInteger testRepoCount = new AtomicInteger();
   private static final int TEST_REPO_WINDOW_DAYS = 2;
-
-  public static void initSsh(KeyPair keyPair) {
-    final Properties config = new Properties();
-    config.put("StrictHostKeyChecking", "no");
-    JSch.setConfig(config);
-
-    // register a JschConfigSessionFactory that adds the private key as identity
-    // to the JSch instance of JGit so that SSH communication via JGit can
-    // succeed
-    SshSessionFactory.setInstance(
-        new JschConfigSessionFactory() {
-          @Override
-          protected void configure(Host hc, Session session) {
-            try {
-              final JSch jsch = getJSch(hc, FS.DETECTED);
-              jsch.addIdentity(
-                  "KeyPair", TestSshKeys.privateKey(keyPair), keyPair.getPublicKeyBlob(), null);
-            } catch (JSchException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        });
-  }
 
   /**
    * Create a new {@link TestRepository} with a distinct commit clock.

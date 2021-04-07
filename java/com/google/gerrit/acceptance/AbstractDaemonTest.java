@@ -48,6 +48,7 @@ import com.google.gerrit.acceptance.PushOneCommit.Result;
 import com.google.gerrit.acceptance.testsuite.account.TestSshKeys;
 import com.google.gerrit.acceptance.testsuite.project.ProjectOperations;
 import com.google.gerrit.acceptance.testsuite.request.RequestScopeOperations;
+import com.google.gerrit.acceptance.testsuite.request.SshSessionFactory;
 import com.google.gerrit.common.Nullable;
 import com.google.gerrit.entities.AccessSection;
 import com.google.gerrit.entities.Account;
@@ -144,7 +145,6 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.Provider;
-import com.jcraft.jsch.KeyPair;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -156,6 +156,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.KeyPair;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -563,7 +564,7 @@ public abstract class AbstractDaemonTest {
         && (adminSshSession == null || userSshSession == null)) {
       // Create Ssh sessions
       KeyPair adminKeyPair = sshKeys.getKeyPair(admin);
-      GitUtil.initSsh(adminKeyPair);
+      SshSessionFactory.initSsh(adminKeyPair);
       Context ctx = newRequestContext(user);
       atrScope.set(ctx);
       userSshSession = ctx.getSession();

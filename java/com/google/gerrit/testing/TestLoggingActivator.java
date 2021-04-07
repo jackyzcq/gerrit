@@ -31,6 +31,7 @@ public class TestLoggingActivator {
 
           // Silence non-critical messages from MINA SSHD.
           .put("org.apache.mina", Level.WARN)
+          .put("org.apache.sshd.client", Level.WARN)
           .put("org.apache.sshd.common", Level.WARN)
           .put("org.apache.sshd.server", Level.WARN)
           .put("org.apache.sshd.common.keyprovider.FileKeyPairProvider", Level.INFO)
@@ -47,11 +48,6 @@ public class TestLoggingActivator {
           .put("org.openid4java.server.RealmVerifier", Level.ERROR)
           .put("org.openid4java.message.AuthSuccess", Level.ERROR)
 
-          // Silence non-critical messages from c3p0 (if used).
-          .put("com.mchange.v2.c3p0", Level.WARN)
-          .put("com.mchange.v2.resourcepool", Level.WARN)
-          .put("com.mchange.v2.sql", Level.WARN)
-
           // Silence non-critical messages from apache.http.
           .put("org.apache.http", Level.WARN)
 
@@ -61,6 +57,8 @@ public class TestLoggingActivator {
           // Silence non-critical messages from JGit.
           .put("org.eclipse.jgit.transport.PacketLineIn", Level.WARN)
           .put("org.eclipse.jgit.transport.PacketLineOut", Level.WARN)
+          .put("org.eclipse.jgit.internal.transport.sshd", Level.WARN)
+          .put("org.eclipse.jgit.util.FileUtils", Level.WARN)
           .put("org.eclipse.jgit.internal.storage.file.FileSnapshot", Level.WARN)
           .put("org.eclipse.jgit.util.FS", Level.WARN)
           .put("org.eclipse.jgit.util.SystemReader", Level.WARN)

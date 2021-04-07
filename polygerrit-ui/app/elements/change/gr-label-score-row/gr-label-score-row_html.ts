@@ -62,16 +62,40 @@ export const htmlTemplate = html`
     }
     gr-button.iron-selected[vote='positive'] {
       --button-background-color: var(--vote-color-recommended);
-      border-radius: 12px;
-      border: 1px solid var(--vote-outline-recommended);
+      --gr-button: {
+        padding: 0 var(--spacing-m);
+        border-style: solid;
+        border-color: var(--vote-outline-recommended);
+        border-top-left-radius: 1em;
+        border-top-right-radius: 1em;
+        border-bottom-right-radius: 1em;
+        border-bottom-left-radius: 1em;
+        border-top-width: 1px;
+        border-right-width: 1px;
+        border-bottom-width: 1px;
+        border-left-width: 1px;
+        color: var(--chip-color);
+      }
     }
     gr-button.iron-selected[vote='min'] {
       --button-background-color: var(--vote-color-rejected);
     }
     gr-button.iron-selected[vote='negative'] {
       --button-background-color: var(--vote-color-disliked);
-      border-radius: 12px;
-      border: 1px solid var(--vote-outline-disliked);
+      --gr-button: {
+        padding: 0 var(--spacing-m);
+        border-style: solid;
+        border-color: var(--vote-outline-disliked);
+        border-top-left-radius: 1em;
+        border-top-right-radius: 1em;
+        border-bottom-right-radius: 1em;
+        border-bottom-left-radius: 1em;
+        border-top-width: 1px;
+        border-right-width: 1px;
+        border-bottom-width: 1px;
+        border-left-width: 1px;
+        color: var(--chip-color);
+      }
     }
     gr-button.iron-selected[vote='neutral'] {
       --button-background-color: var(--vote-color-neutral);

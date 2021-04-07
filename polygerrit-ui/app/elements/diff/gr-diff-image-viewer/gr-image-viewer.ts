@@ -36,7 +36,9 @@ import {
 import {classMap} from 'lit-html/directives/class-map';
 import {StyleInfo, styleMap} from 'lit-html/directives/style-map';
 
-import {Dimensions, fitToFrame, FrameConstrainer, Rect} from './util';
+import {Dimensions, fitToFrame, FrameConstrainer, Point, Rect} from './util';
+
+const DRAG_DEAD_ZONE_PIXELS = 5;
 
 /**
  * This components allows the user to rapidly switch between two given images
@@ -50,10 +52,6 @@ export class GrImageViewer extends LitElement {
 
   // URL for the image to use as revision.
   @property({type: String}) revisionUrl = '';
-
-  @internalProperty() protected baseImage?: HTMLImageElement;
-
-  @internalProperty() protected revisionImage?: HTMLImageElement;
 
   @internalProperty() protected baseSelected = true;
 
@@ -98,6 +96,14 @@ export class GrImageViewer extends LitElement {
     1.75,
     2,
   ];
+
+  @internalProperty() protected grabbing = false;
+
+  private ownsMouseDown = false;
+
+  private centerOnDown: Point = {x: 0, y: 0};
+
+  private pointerOnDown: Point = {x: 0, y: 0};
 
   private readonly frameConstrainer = new FrameConstrainer();
 
@@ -321,18 +327,6 @@ export class GrImageViewer extends LitElement {
       ></div>
     `;
 
-    const shapeLeft = `
-      border-radius: 4px 0 0 4px;
-      border-left-width: 1px;
-      border-right-width: 0;
-      `;
-    const shapeRight = `
-      border-radius: 0 4px 4px 0;
-      border-left-width: 0;
-      border-right-width: 1px;
-      `;
-    const outlinedBorder =
-      'border: 1px solid var(--primary-button-background-color);';
     // To pass CSS mixins for @apply to Polymer components, they need to be
     // wrapped in a <custom-style>.
     const customStyle = html`
@@ -340,24 +334,30 @@ export class GrImageViewer extends LitElement {
         <style>
             paper-button.left {
               --paper-button: {
-                ${shapeLeft}
+                border-radius: 4px 0 0 4px;
+                border-width: 1px 0 1px 1px;
               }
             }
             paper-button.left[outlined] {
               --paper-button: {
-                ${outlinedBorder}
-                ${shapeLeft}
+                border-radius: 4px 0 0 4px;
+                border-width: 1px 0 1px 1px;
+                border-style: solid;
+                border-color: var(--primary-button-background-color);
               }
             }
             paper-button.right {
               --paper-button: {
-                ${shapeRight}
+                border-radius: 0 4px 4px 0;
+                border-width: 1px 1px 1px 0;
               }
             }
             paper-button.right[outlined] {
               --paper-button: {
-                ${outlinedBorder}
-                ${shapeRight}
+                border-radius: 0 4px 4px 0;
+                border-width: 1px 1px 1px 0;
+                border-style: solid;
+                border-color: var(--primary-button-background-color);
               }
             }
             paper-item {
@@ -390,11 +390,17 @@ export class GrImageViewer extends LitElement {
             base: this.baseSelected,
             revision: !this.baseSelected,
           })}"
-          style="${styleMap(this.zoomedImageStyle)}"
+          style="${styleMap({
+            ...this.zoomedImageStyle,
+            cursor: this.grabbing ? 'grabbing' : 'pointer',
+          })}"
           .scale="${this.scale}"
           .frameRect="${this.magnifierFrame}"
-          @click="${this.toggleImage}"
+          @mousedown="${this.mousedownMagnifier}"
+          @mouseup="${this.mouseupMagnifier}"
           @mousemove="${this.mousemoveMagnifier}"
+          @mouseleave="${this.mouseleaveMagnifier}"
+          @dragstart="${this.dragstartMagnifier}"
         >
           ${sourceImage}
         </gr-zoomed-image>
@@ -463,8 +469,53 @@ export class GrImageViewer extends LitElement {
     this.followMouse = !this.followMouse;
   }
 
+  mousedownMagnifier(event: MouseEvent) {
+    if (event.buttons === 1) {
+      this.ownsMouseDown = true;
+      this.centerOnDown = this.frameConstrainer.getCenter();
+      this.pointerOnDown = {
+        x: event.clientX,
+        y: event.clientY,
+      };
+    }
+  }
+
+  mouseupMagnifier(event: MouseEvent) {
+    const offsetX = event.clientX - this.pointerOnDown.x;
+    const offsetY = event.clientY - this.pointerOnDown.y;
+    const distance = Math.max(Math.abs(offsetX), Math.abs(offsetY));
+    // Consider very short drags as clicks. These tend to happen more often on
+    // external mice.
+    if (this.ownsMouseDown && distance < DRAG_DEAD_ZONE_PIXELS) {
+      this.toggleImage();
+    }
+    this.grabbing = false;
+    this.ownsMouseDown = false;
+  }
+
   mousemoveMagnifier(event: MouseEvent) {
-    if (!this.followMouse) return;
+    if (event.buttons === 1 && this.ownsMouseDown) {
+      this.handleMagnifierDrag(event);
+      return;
+    }
+    if (this.followMouse) {
+      this.handleFollowMouse(event);
+      return;
+    }
+  }
+
+  private handleMagnifierDrag(event: MouseEvent) {
+    this.grabbing = true;
+    const offsetX = event.clientX - this.pointerOnDown.x;
+    const offsetY = event.clientY - this.pointerOnDown.y;
+    this.frameConstrainer.requestCenter({
+      x: this.centerOnDown.x - offsetX / this.scale,
+      y: this.centerOnDown.y - offsetY / this.scale,
+    });
+    this.updateFrames();
+  }
+
+  private handleFollowMouse(event: MouseEvent) {
     const rect = this.imageArea!.getBoundingClientRect();
     const offsetX = event.clientX - rect.left;
     const offsetY = event.clientY - rect.top;
@@ -475,6 +526,15 @@ export class GrImageViewer extends LitElement {
       y: this.imageSize.height * fractionY,
     });
     this.updateFrames();
+  }
+
+  mouseleaveMagnifier() {
+    this.grabbing = false;
+    this.ownsMouseDown = false;
+  }
+
+  dragstartMagnifier(event: DragEvent) {
+    event.preventDefault();
   }
 
   onOverviewCenterUpdated(event: CustomEvent) {
